@@ -1,4 +1,4 @@
-package com.alex.rest;
+package com.alex.greeting;
 
 /**
  * Created by alex on 18.10.2016.

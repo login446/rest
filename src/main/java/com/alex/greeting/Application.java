@@ -1,4 +1,4 @@
-package com.alex.rest;
+package com.alex.greeting;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.SpringApplication;

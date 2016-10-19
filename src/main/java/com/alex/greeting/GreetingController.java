@@ -1,4 +1,4 @@
-package com.alex.rest;
+package com.alex.greeting;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
