@@ -16,15 +16,17 @@ import java.util.List;
  */
 @RestController
 public class WebController {
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @RequestMapping(value = "/user/all", method = RequestMethod.GET)
-    public User method(@Autowired JdbcTemplate jdbcTemplate) {
+    public List<User> method() {
         List<User> list = jdbcTemplate.query("select * from users", new RowMapper<User>() {
             public User mapRow(ResultSet resultSet, int i) throws SQLException {
                 return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
             }
         });
-        return list.get(0);
+        return list;
     }
 
     @RequestMapping(value = "/user", method = RequestMethod.PUT)
