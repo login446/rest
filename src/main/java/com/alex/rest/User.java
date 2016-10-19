@@ -15,6 +15,10 @@ public class User {
         this.id = id;
         this.name = name;
         this.score = 0;
+    }public User(int id, String name, int score) {
+        this.id = id;
+        this.name = name;
+        this.score = score;
     }
 
     public int getScore() {
@@ -33,4 +37,11 @@ public class User {
         return name;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }
