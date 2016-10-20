@@ -15,7 +15,9 @@ public class User {
         this.id = id;
         this.name = name;
         this.score = 0;
-    }public User(int id, String name, int score) {
+    }
+
+    public User(int id, String name, int score) {
         this.id = id;
         this.name = name;
         this.score = score;
