@@ -47,6 +47,7 @@ public class WebController {
                         return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
                     }
                 }, name);
+                response.setStatus(201);
                 return list.get(0);
             } else {
                 response.sendError(409);
