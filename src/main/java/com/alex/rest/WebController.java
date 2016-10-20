@@ -1,17 +1,10 @@
 package com.alex.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -20,120 +13,77 @@ import java.util.List;
 @RestController
 public class WebController {
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private AuthDataDao authDataDao;
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public class BadRequestException extends RuntimeException {
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public class NotFoundException extends RuntimeException {
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public class ConflictException extends RuntimeException {
+    }
 
     @RequestMapping(value = "/user/all", method = RequestMethod.GET)
     public List<User> getAllUsers() {
-        List<User> list = jdbcTemplate.query("select * from users", new RowMapper<User>() {
-            public User mapRow(ResultSet resultSet, int i) throws SQLException {
-                return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
-            }
-        });
-        return list;
+        return authDataDao.getAllUsers();
     }
 
     @RequestMapping(value = "/user", method = RequestMethod.PUT)
-    public User addNewUser(@RequestParam("name") String name, HttpServletResponse response) throws IOException {
-        if (name != null) {
-            List<User> list = jdbcTemplate.query("select * from users where name=?", new RowMapper<User>() {
-                public User mapRow(ResultSet resultSet, int i) throws SQLException {
-                    return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
-                }
-            }, name);
-            if (list.size() == 0) {
-                jdbcTemplate.update("INSERT INTO users(name, score) VALUES(?,?)", name, 0);
-                list = jdbcTemplate.query("select * from users where name=?", new RowMapper<User>() {
-                    public User mapRow(ResultSet resultSet, int i) throws SQLException {
-                        return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
-                    }
-                }, name);
-                response.setStatus(201);
-                return list.get(0);
-            } else {
-                response.sendError(409);
-                return null;
-            }
-        } else {
-            response.sendError(400);
-            return null;
+    @ResponseStatus(HttpStatus.CREATED)
+    public User addNewUser(@RequestParam("name") String name) throws IOException {
+        if (name == null) {
+            throw new BadRequestException();
         }
+        if (authDataDao.getUser(name) != null) {
+            throw new ConflictException();
+        }
+        return authDataDao.addNewUser(name);
     }
 
     @RequestMapping(value = "/user", method = RequestMethod.DELETE)
-    public void delUser(@RequestParam("name") String name, HttpServletResponse response) {
-        if (name != null) {
-            List<User> list = jdbcTemplate.query("select * from users where name=?", new RowMapper<User>() {
-                public User mapRow(ResultSet resultSet, int i) throws SQLException {
-                    return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
-                }
-            }, name);
-            if (list.size() != 0) {
-                jdbcTemplate.update("DELETE FROM users WHERE name=?", name);
-            } else {
-                try {
-                    response.sendError(404);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            try {
-                response.sendError(400);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public void delUser(@RequestParam("name") String name) {
+        if (name == null) {
+            throw new BadRequestException();
         }
+        User user = authDataDao.getUser(name);
+        if (authDataDao.getUser(name) == null) {
+            throw new NotFoundException();
+        }
+        authDataDao.delUser(name);
     }
 
     @RequestMapping(value = "/user/name", method = RequestMethod.PATCH)
-    public void rename(HttpServletResponse response, @RequestParam("name") String name, @RequestParam("newName") String newName) {
-        if (name != null && newName != null) {
-            List<User> list = jdbcTemplate.query("select * from users where name=?", new RowMapper<User>() {
-                public User mapRow(ResultSet resultSet, int i) throws SQLException {
-                    return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
-                }
-            }, name);
-            if (list.size() != 0) {
-                jdbcTemplate.update("UPDATE users SET name=? WHERE name=?", newName, name);
-            } else {
-                try {
-                    response.sendError(404);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            try {
-                response.sendError(400);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public void rename(@RequestParam("name") String name, @RequestParam("newName") String newName) {
+        if (name == null) {
+            throw new BadRequestException();
         }
+        if (newName == null) {
+            throw new BadRequestException();
+        }
+        if (authDataDao.getUser(name) == null) {
+            throw new NotFoundException();
+        }
+        if (authDataDao.getUser(newName) != null) {
+            throw new ConflictException();
+        }
+        authDataDao.rename(name, newName);
     }
 
     @RequestMapping(value = "/user/score", method = RequestMethod.PATCH)
-    public void reScore(HttpServletResponse response, @RequestParam("name") String name, @RequestParam("score") String score) {
-        if (name != null && score != null) {
-            List<User> list = jdbcTemplate.query("select * from users where name=?", new RowMapper<User>() {
-                public User mapRow(ResultSet resultSet, int i) throws SQLException {
-                    return new User(resultSet.getInt("id"), resultSet.getString("name"), resultSet.getInt("score"));
-                }
-            }, name);
-            if (list.size() != 0) {
-                jdbcTemplate.update("UPDATE users SET score=? WHERE name=?", Integer.parseInt(score), name);
-            } else {
-                try {
-                    response.sendError(404);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        } else {
-            try {
-                response.sendError(400);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public void reScore(@RequestParam("name") String name, @RequestParam("score") String score) {
+        if (name == null) {
+            throw new BadRequestException();
         }
+        if (score == null) {
+            throw new BadRequestException();
+        }
+        if (authDataDao.getUser(name) == null) {
+            throw new NotFoundException();
+        }
+        authDataDao.reScore(name, score);
     }
 }
