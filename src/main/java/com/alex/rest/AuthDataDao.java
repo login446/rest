@@ -55,8 +55,8 @@ public class AuthDataDao {
         jdbcTemplate.update(sql, newName, name);
     }
 
-    public void reScore(String name, String score) {
+    public void reScore(String name, int score) {
         String sql = "UPDATE users SET score=? WHERE name=?";
-        jdbcTemplate.update(sql, Integer.parseInt(score), name);
+        jdbcTemplate.update(sql, score, name);
     }
 }

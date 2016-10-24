@@ -35,7 +35,7 @@ public class WebController {
     @RequestMapping(value = "/user", method = RequestMethod.PUT)
     @ResponseStatus(HttpStatus.CREATED)
     public User addNewUser(@RequestParam("name") String name) throws IOException {
-        if (name == null) {
+        if (name.isEmpty()) {
             throw new BadRequestException();
         }
         if (authDataDao.getUser(name) != null) {
@@ -46,7 +46,7 @@ public class WebController {
 
     @RequestMapping(value = "/user", method = RequestMethod.DELETE)
     public void delUser(@RequestParam("name") String name) {
-        if (name == null) {
+        if (name.isEmpty()) {
             throw new BadRequestException();
         }
         User user = authDataDao.getUser(name);
@@ -58,10 +58,10 @@ public class WebController {
 
     @RequestMapping(value = "/user/name", method = RequestMethod.PATCH)
     public void rename(@RequestParam("name") String name, @RequestParam("newName") String newName) {
-        if (name == null) {
+        if (name.isEmpty()) {
             throw new BadRequestException();
         }
-        if (newName == null) {
+        if (newName.isEmpty()) {
             throw new BadRequestException();
         }
         if (authDataDao.getUser(name) == null) {
@@ -75,15 +75,20 @@ public class WebController {
 
     @RequestMapping(value = "/user/score", method = RequestMethod.PATCH)
     public void reScore(@RequestParam("name") String name, @RequestParam("score") String score) {
-        if (name == null) {
+        int scoreInt;
+        if (name.isEmpty()) {
             throw new BadRequestException();
         }
-        if (score == null) {
+
+        try {
+            scoreInt = Integer.parseInt(score);
+        } catch (NumberFormatException ex) {
             throw new BadRequestException();
         }
+
         if (authDataDao.getUser(name) == null) {
             throw new NotFoundException();
         }
-        authDataDao.reScore(name, score);
+        authDataDao.reScore(name, scoreInt);
     }
 }
