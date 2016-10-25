@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
  * Created by admin on 24.10.2016.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class WebControllerTest {
+public class WebControllerTest2 {
     @InjectMocks
     private WebController webController;
     @Mock
