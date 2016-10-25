@@ -1,20 +1,17 @@
 package com.alex.rest;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
@@ -25,38 +22,33 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Application.class)
 @WebAppConfiguration
+@Sql("/scriptDB.sql")
 public class WebControllerTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
     private MockMvc mockMvc;
 
-    @Autowired
-    JdbcTemplate jdbcTemplate;
-
     @Before
     public void setUp() throws Exception {
         this.mockMvc = webAppContextSetup(webApplicationContext).build();
-
-        String sql = "CREATE TABLE users " +
-                "(id INT NOT NULL AUTO_INCREMENT," +
-                "name VARCHAR(45) NOT NULL," +
-                "score INT NOT NULL," +
-                " PRIMARY KEY (id))";
-        jdbcTemplate.execute(sql);
-
-        String sqlInsert = "INSERT INTO users(name, score) VALUES(?,?)";
-        jdbcTemplate.update(sqlInsert, "ConflictName", 0);
-        jdbcTemplate.update(sqlInsert, "DeleteName", 0);
-        jdbcTemplate.update(sqlInsert, "Rename", 0);
-        jdbcTemplate.update(sqlInsert, "RenameOk", 0);
-        jdbcTemplate.update(sqlInsert, "ReScore", 0);
     }
 
-    @After
-    public void drop() throws Exception {
-        String sql = "DROP TABLE users";
-        jdbcTemplate.execute(sql);
+    @Test
+    public void getAllUsers() throws Exception {
+        mockMvc.perform(get("/user/all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size(*)").value(5))
+                .andExpect(jsonPath("$.[?(@.id == 1)].name").value("ConflictName"))
+                .andExpect(jsonPath("$.[?(@.id == 1)].score").value(0))
+                .andExpect(jsonPath("$.[?(@.id == 2)].name").value("DeleteName"))
+                .andExpect(jsonPath("$.[?(@.id == 2)].score").value(0))
+                .andExpect(jsonPath("$.[?(@.id == 3)].name").value("Rename"))
+                .andExpect(jsonPath("$.[?(@.id == 3)].score").value(0))
+                .andExpect(jsonPath("$.[?(@.id == 4)].name").value("RenameOk"))
+                .andExpect(jsonPath("$.[?(@.id == 4)].score").value(0))
+                .andExpect(jsonPath("$.[?(@.id == 5)].name").value("ReScore"))
+                .andExpect(jsonPath("$.[?(@.id == 5)].score").value(0));
     }
 
     @Test
